@@ -1,0 +1,11 @@
+# Cargo
+/target
+
+# macOS
+.DS_Store
+
+# Editor stuff
+.idea/
+
+# Local data folder
+data/

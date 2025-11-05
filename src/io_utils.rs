@@ -1,0 +1,50 @@
+use crate::DATA_PATH;
+use std::io::{Read, Write};
+use std::path::PathBuf;
+
+pub fn read_doc(i: usize) -> anyhow::Result<Vec<u8>> {
+    let path = PathBuf::from(DATA_PATH).join(format!("doc{}.dat", i));
+    // Check if the file exists
+    if !path.exists() {
+        return Err(anyhow::anyhow!("Document {i} not found"));
+    }
+    // Read file content
+    let mut file = std::fs::File::open(path)?;
+    let mut buf = Vec::new();
+    file.read_to_end(&mut buf)
+        .map_err(|e| anyhow::anyhow!("Error reading file: {}", e))?;
+    Ok(buf)
+}
+
+pub fn read_node(i: usize, j: usize) -> anyhow::Result<Option<Vec<u8>>> {
+    let path = PathBuf::from(DATA_PATH).join(format!("node{}.{}.dat", i, j));
+    // Check if the file exists
+    if !path.exists() {
+        return Ok(None);
+    }
+    // Read file content
+    let mut file = std::fs::File::open(path)?;
+    let mut buf = Vec::new();
+    file.read_to_end(&mut buf)
+        .map_err(|e| anyhow::anyhow!("Error reading file: {}", e))?;
+    Ok(Some(buf))
+}
+
+pub fn write_node(i: usize, j: usize, data: &[u8]) -> anyhow::Result<()> {
+    let path = PathBuf::from(DATA_PATH).join(format!("node{}.{}.dat", i, j));
+    // Write contents to the file
+    let mut file = std::fs::File::create(path)?;
+    file.write_all(data)
+        .map_err(|e| anyhow::anyhow!("Error writing file: {}", e))?;
+    Ok(())
+}
+
+pub fn write_summary(content: Vec<String>) -> anyhow::Result<()> {
+    let path = PathBuf::from(DATA_PATH).join("summary.txt");
+    let mut out = std::fs::File::create(path)?;
+    for line in content {
+        out.write_all(line.as_bytes())?;
+        out.write_all(b"\n")?;
+    }
+    Ok(())
+}
