@@ -50,8 +50,27 @@ impl MerkleTree {
     }
 
     pub fn build(&self) -> Result<()> {
-        self.build_leaves()?;
-        self.build_nodes()?;
+        // Compute and store doc hashes
+        for j in 0..self.n {
+            self.compute_doc(j)?;
+        }
+        // Compute and store node hashes
+        for i in 1..=self.max_layer {
+            let mut j: usize = 0;
+            loop {
+                let Some(left) = read_node(i - 1, 2 * j)? else {
+                    break; // No more nodes in this layer
+                };
+                // Read the right node, otherwise use the empty vector
+                let right = read_node(i - 1, 2 * j + 1)?.unwrap_or_default();
+                // Compute hash of the parent node
+                let parent = blake3(NOD_PREFIX.as_bytes(), &[&left, &right]);
+                // Write node to file
+                write_node(i, j, &parent)?;
+                // Jump to the next node
+                j += 1;
+            }
+        }
         Ok(())
     }
 
@@ -120,35 +139,6 @@ impl MerkleTree {
         let digest = blake3(DOC_PREFIX.as_bytes(), &[&data]);
         // Write hash to file
         write_node(0, j, &digest)?;
-        Ok(())
-    }
-
-    fn build_leaves(&self) -> Result<()> {
-        // Compute and store doc hashes
-        for j in 0..self.n {
-            self.compute_doc(j)?;
-        }
-        Ok(())
-    }
-
-    fn build_nodes(&self) -> Result<()> {
-        // Compute node hashes
-        for i in 1..=self.max_layer {
-            let mut j: usize = 0;
-            loop {
-                let Some(left) = read_node(i - 1, 2 * j)? else {
-                    break; // No more nodes in this layer
-                };
-                // Read the right node, otherwise use the empty vector
-                let right = read_node(i - 1, 2 * j + 1)?.unwrap_or_default();
-                // Compute hash of the parent node
-                let parent = blake3(NOD_PREFIX.as_bytes(), &[&left, &right]);
-                // Write node to file
-                write_node(i, j, &parent)?;
-                // Jump to the next node
-                j += 1;
-            }
-        }
         Ok(())
     }
 }
