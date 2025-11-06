@@ -23,8 +23,8 @@ fn main() -> Result<()> {
     assert!(args.n > 0, "Number of documents must be greater than 0");
     // Create a new Merkle tree
     let tree = MerkleTree::new(args.n);
-    // Compute the tree
-    tree.compute()?;
+    // Build the tree
+    tree.build()?;
     // Store the summary
     io_utils::write_summary(tree.summary()?)?;
 

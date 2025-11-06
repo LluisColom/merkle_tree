@@ -32,26 +32,61 @@ impl MerkleTree {
         }
     }
 
-    pub fn compute(&self) -> Result<()> {
-        self.compute_leaves()?;
-        self.compute_nodes()?;
+    pub fn build(&self) -> Result<()> {
+        self.build_leaves()?;
+        self.build_nodes()?;
         Ok(())
     }
 
-    fn compute_leaves(&self) -> Result<()> {
-        // Compute leaf hashes
+    fn build_leaves(&self) -> Result<()> {
+        // Compute and store doc hashes
         for j in 0..self.n {
-            // Read document content
-            let data = read_doc(j)?;
-            // Compute blake3 hash
-            let digest = blake3(DOC_PREFIX.as_bytes(), &[&data]);
-            // Write hash to file
-            write_node(0, j, &digest)?;
+            self.compute_doc(j)?;
         }
         Ok(())
     }
 
-    fn compute_nodes(&self) -> Result<()> {
+    fn compute_doc(&self, j: usize) -> Result<()> {
+        // Read document content
+        let data = read_doc(j)?;
+        // Compute blake3 hash
+        let digest = blake3(DOC_PREFIX.as_bytes(), &[&data]);
+        // Write hash to file
+        write_node(0, j, &digest)?;
+        Ok(())
+    }
+
+    fn add_doc(&mut self, leaf_idx: usize) -> Result<()> {
+        // Compute and store doc hash
+        self.compute_doc(leaf_idx)?;
+        // Increment number of documents
+        self.n += 1;
+        self.max_layer = max_layer(self.n);
+
+        let mut j = leaf_idx / 2;
+        // Compute node hashes
+        for i in 1..=self.max_layer {
+            let left_idx = 2 * j;
+            let right_idx = 2 * j + 1;
+
+            // Read the left node
+            let left = read_node(i - 1, left_idx)?.expect("Left node must exist");
+
+            // Read the right node, otherwise use the empty vector
+            let right = read_node(i - 1, right_idx)?.unwrap_or_default();
+
+            // Compute hash of the parent node
+            let parent = blake3(NOD_PREFIX.as_bytes(), &[&left, &right]);
+
+            // Write node to file
+            write_node(i, j, &parent)?;
+
+            j /= 2; // Move up
+        }
+        Ok(())
+    }
+
+    fn build_nodes(&self) -> Result<()> {
         // Compute node hashes
         for i in 1..=self.max_layer {
             let mut j: usize = 0;
