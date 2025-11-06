@@ -37,7 +37,7 @@ fn main() -> Result<()> {
             // Build the tree
             tree.build()?;
             // Store the summary
-            io_utils::write_summary(tree.summary()?)?;
+            tree.store()?;
             println!("Tree computed successfully");
         }
         Command::Add { doc_idx } => {
@@ -45,7 +45,7 @@ fn main() -> Result<()> {
             // Add the document to the tree
             tree.add_doc(doc_idx)?;
             // Store the summary
-            io_utils::write_summary(tree.summary()?)?;
+            tree.store()?;
             println!("New document added successfully");
         }
     }

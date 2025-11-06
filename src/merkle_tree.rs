@@ -1,4 +1,4 @@
-use crate::io_utils::{read_doc, read_node, read_summary, write_node};
+use crate::io_utils::{read_doc, read_node, read_summary, write_node, write_summary};
 use crate::{DOC_PREFIX, NOD_PREFIX};
 use anyhow::Result;
 
@@ -98,7 +98,12 @@ impl MerkleTree {
         Ok(())
     }
 
-    pub fn summary(&self) -> Result<Vec<String>> {
+    pub fn store(&self) -> Result<()> {
+        write_summary(self.summary()?)
+    }
+
+    // Private methods
+    fn summary(&self) -> Result<Vec<String>> {
         // Read root node
         let root = read_node(self.max_layer, 0)?.expect("Root node not found");
 
@@ -131,7 +136,6 @@ impl MerkleTree {
         Ok(lines)
     }
 
-    // Private methods
     fn compute_doc(&self, j: usize) -> Result<()> {
         // Read document content
         let data = read_doc(j)?;
