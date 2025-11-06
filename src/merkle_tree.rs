@@ -1,4 +1,4 @@
-use crate::io_utils::{read_doc, read_node, write_node};
+use crate::io_utils::{read_doc, read_node, read_summary, write_node};
 use crate::{DOC_PREFIX, NOD_PREFIX};
 use anyhow::Result;
 
@@ -32,6 +32,23 @@ impl MerkleTree {
         }
     }
 
+    pub fn load() -> Result<Option<Self>> {
+        // Read summary content
+        let summary = match read_summary()? {
+            None => return Ok(None),
+            Some(summary) => summary,
+        };
+        // Parse the first line
+        let first_line = summary.lines().next().unwrap_or_default();
+        // Parse the number of documents
+        let n_field = first_line.split(":").nth(4);
+        // Cast to usize and return the tree
+        match n_field.and_then(|n| n.parse::<usize>().ok()) {
+            Some(n) => Ok(Some(Self::new(n))),
+            None => Ok(None),
+        }
+    }
+
     pub fn build(&self) -> Result<()> {
         self.build_leaves()?;
         self.build_nodes()?;
@@ -56,7 +73,7 @@ impl MerkleTree {
         Ok(())
     }
 
-    fn add_doc(&mut self, leaf_idx: usize) -> Result<()> {
+    pub fn add_doc(&mut self, leaf_idx: usize) -> Result<()> {
         // Compute and store doc hash
         self.compute_doc(leaf_idx)?;
         // Increment number of documents

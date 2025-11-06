@@ -39,6 +39,16 @@ pub fn write_node(i: usize, j: usize, data: &[u8]) -> anyhow::Result<()> {
     Ok(())
 }
 
+pub fn read_summary() -> anyhow::Result<Option<String>> {
+    let path = PathBuf::from(DATA_PATH).join("summary.txt");
+    // Check if the file exists
+    if !path.exists() {
+        return Ok(None);
+    }
+    // Read file content as string
+    Ok(Some(std::fs::read_to_string(path)?))
+}
+
 pub fn write_summary(content: Vec<String>) -> anyhow::Result<()> {
     let path = PathBuf::from(DATA_PATH).join("summary.txt");
     let mut out = std::fs::File::create(path)?;
