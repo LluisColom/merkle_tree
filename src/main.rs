@@ -25,8 +25,6 @@ enum Command {
 }
 
 fn main() -> Result<()> {
-    // println!("Welcome to the Merkle Tree generator");
-
     let args = Args::parse();
 
     match args.command {
