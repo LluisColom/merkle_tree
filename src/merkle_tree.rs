@@ -81,24 +81,18 @@ impl MerkleTree {
         self.max_layer = max_layer(self.n);
 
         let mut j = leaf_idx / 2;
-        // Compute node hashes
+        // Update node hashes
         for i in 1..=self.max_layer {
-            let left_idx = 2 * j;
-            let right_idx = 2 * j + 1;
-
             // Read the left node
-            let left = read_node(i - 1, left_idx)?.expect("Left node must exist");
-
+            let left = read_node(i - 1, 2 * j)?.expect("Left node must exist");
             // Read the right node, otherwise use the empty vector
-            let right = read_node(i - 1, right_idx)?.unwrap_or_default();
-
+            let right = read_node(i - 1, 2 * j + 1)?.unwrap_or_default();
             // Compute hash of the parent node
             let parent = blake3(NOD_PREFIX.as_bytes(), &[&left, &right]);
-
             // Write node to file
             write_node(i, j, &parent)?;
-
-            j /= 2; // Move up
+            // Move up
+            j /= 2;
         }
         Ok(())
     }
