@@ -108,16 +108,16 @@ impl MerkleTree {
     }
 
     pub fn gen_proof(&self, doc_idx: usize) -> Result<Vec<String>> {
-        let mut proofs: Vec<String> = Vec::with_capacity(self.max_layer);
+        let mut path: Vec<String> = Vec::with_capacity(self.max_layer);
         let mut j = doc_idx;
         // Generate proofs
         for i in 0..self.max_layer {
             let sibling_j = if is_even(j) { j + 1 } else { j - 1 };
             let sibling = read_node(i, sibling_j)?.unwrap_or_default();
-            proofs.push(hex::encode(sibling));
+            path.push(hex::encode(sibling));
             j /= 2;
         }
-        Ok(proofs)
+        Ok(path)
     }
 
     pub fn store(&self) -> Result<()> {
