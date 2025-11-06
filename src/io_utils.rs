@@ -2,6 +2,20 @@ use crate::DATA_PATH;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 
+pub fn read_file(file_name: impl AsRef<str>) -> anyhow::Result<String> {
+    let path = PathBuf::from(DATA_PATH).join(file_name.as_ref());
+    // Read file content as string
+    Ok(std::fs::read_to_string(path)?)
+}
+
+pub fn write_file(file_name: impl AsRef<str>, content: &[u8]) -> anyhow::Result<()> {
+    let path = PathBuf::from(DATA_PATH).join(file_name.as_ref());
+    let mut file = std::fs::File::create(path)?;
+    file.write_all(content)
+        .map_err(|e| anyhow::anyhow!("Error writing file: {}", e))?;
+    Ok(())
+}
+
 pub fn read_doc(i: usize) -> anyhow::Result<Vec<u8>> {
     let path = PathBuf::from(DATA_PATH).join(format!("doc{}.dat", i));
     // Check if the file exists

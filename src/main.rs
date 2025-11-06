@@ -52,11 +52,8 @@ fn main() -> Result<()> {
             let tree = MerkleTree::load()?.expect("Tree not found");
             assert!(doc_idx < tree.elements(), "Invalid document index");
             // Generate the proof
-            let proofs = tree.gen_proof(doc_idx)?;
-            println!("Proofs generated successfully");
-            for proof in proofs {
-                println!("{}", proof);
-            }
+            tree.gen_proof(doc_idx)?;
+            println!("Proof generated successfully");
         }
     }
     Ok(())

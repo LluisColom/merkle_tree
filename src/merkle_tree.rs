@@ -1,4 +1,6 @@
-use crate::io_utils::{read_doc, read_node, read_summary, write_node, write_summary};
+use crate::io_utils::{
+    read_doc, read_file, read_node, read_summary, write_file, write_node, write_summary,
+};
 use crate::{DOC_PREFIX, NOD_PREFIX};
 use anyhow::Result;
 
@@ -107,17 +109,54 @@ impl MerkleTree {
         Ok(())
     }
 
-    pub fn gen_proof(&self, doc_idx: usize) -> Result<Vec<String>> {
+    pub fn gen_proof(&self, doc_idx: usize) -> Result<()> {
         let mut path: Vec<String> = Vec::with_capacity(self.max_layer);
         let mut j = doc_idx;
-        // Generate proofs
+        // Generate proof
         for i in 0..self.max_layer {
-            let sibling_j = if is_even(j) { j + 1 } else { j - 1 };
-            let sibling = read_node(i, sibling_j)?.unwrap_or_default();
-            path.push(hex::encode(sibling));
+            let entry = if is_even(j) {
+                let sibling = read_node(i, j + 1)?.unwrap_or_default();
+                format!("R{}", hex::encode(sibling))
+            } else {
+                let sibling = read_node(i, j - 1)?.unwrap_or_default();
+                format!("L{}", hex::encode(sibling))
+            };
+            path.push(entry);
+            // Move up
             j /= 2;
         }
-        Ok(path)
+        // Write proof to file
+        write_file("proof.dat", &path.join(":").as_bytes())?;
+        Ok(())
+    }
+
+    pub fn verify_proof(pub_info: String, doc: String, proof: String) -> Result<bool> {
+        // Extract required fields from public info
+        let parts = pub_info.split(":").collect::<Vec<&str>>();
+        let hasher = parts[1];
+        assert_eq!(hasher, "blake3", "Only blake3 is supported for now");
+
+        let doc_prefix = parts[2];
+        let node_prefix = parts[3];
+        let root_hex = parts[6];
+
+        // Read and hash the document
+        let doc = read_file(doc)?;
+        let mut current = blake3(doc_prefix.as_bytes(), &[doc.as_bytes()]);
+
+        // Process proof
+        for entry in read_file(proof)?.split(':') {
+            let (dir, hash_hex) = entry.split_at(1);
+            let hash = hex::decode(hash_hex)?;
+
+            current = match dir {
+                "L" => blake3(node_prefix.as_bytes(), &[&hash, &current]),
+                "R" => blake3(node_prefix.as_bytes(), &[&current, &hash]),
+                _ => anyhow::bail!("Invalid direction"),
+            };
+        }
+        // Check if verification succeeds
+        Ok(hex::encode(current) == root_hex)
     }
 
     pub fn store(&self) -> Result<()> {
