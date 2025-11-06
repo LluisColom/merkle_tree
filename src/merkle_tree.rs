@@ -19,6 +19,11 @@ fn max_layer(n: usize) -> usize {
     }
 }
 
+#[inline]
+fn is_even(n: usize) -> bool {
+    n & 1 == 0
+}
+
 pub struct MerkleTree {
     n: usize,
     max_layer: usize,
@@ -30,6 +35,10 @@ impl MerkleTree {
             n,
             max_layer: max_layer(n),
         }
+    }
+
+    pub fn elements(&self) -> usize {
+        self.n
     }
 
     pub fn load() -> Result<Option<Self>> {
@@ -74,14 +83,14 @@ impl MerkleTree {
         Ok(())
     }
 
-    pub fn add_doc(&mut self, leaf_idx: usize) -> Result<()> {
+    pub fn add_doc(&mut self, doc_idx: usize) -> Result<()> {
         // Compute and store doc hash
-        self.compute_doc(leaf_idx)?;
+        self.compute_doc(doc_idx)?;
         // Increment number of documents
         self.n += 1;
         self.max_layer = max_layer(self.n);
 
-        let mut j = leaf_idx / 2;
+        let mut j = doc_idx / 2;
         // Update node hashes
         for i in 1..=self.max_layer {
             // Read the left node
@@ -96,6 +105,19 @@ impl MerkleTree {
             j /= 2;
         }
         Ok(())
+    }
+
+    pub fn gen_proof(&self, doc_idx: usize) -> Result<Vec<String>> {
+        let mut proofs: Vec<String> = Vec::with_capacity(self.max_layer);
+        let mut j = doc_idx;
+        // Generate proofs
+        for i in 0..self.max_layer {
+            let sibling_j = if is_even(j) { j + 1 } else { j - 1 };
+            let sibling = read_node(i, sibling_j)?.unwrap_or_default();
+            proofs.push(hex::encode(sibling));
+            j /= 2;
+        }
+        Ok(proofs)
     }
 
     pub fn store(&self) -> Result<()> {

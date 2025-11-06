@@ -22,6 +22,8 @@ enum Command {
     Build { n: usize },
     /// Add a new document to the tree
     Add { doc_idx: usize },
+    /// Generate a proof for a given document
+    Gen { doc_idx: usize },
 }
 
 fn main() -> Result<()> {
@@ -45,6 +47,16 @@ fn main() -> Result<()> {
             // Store the summary
             tree.store()?;
             println!("New document added successfully");
+        }
+        Command::Gen { doc_idx } => {
+            let tree = MerkleTree::load()?.expect("Tree not found");
+            assert!(doc_idx < tree.elements(), "Invalid document index");
+            // Generate the proof
+            let proofs = tree.gen_proof(doc_idx)?;
+            println!("Proofs generated successfully");
+            for proof in proofs {
+                println!("{}", proof);
+            }
         }
     }
     Ok(())
