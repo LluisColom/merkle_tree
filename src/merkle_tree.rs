@@ -55,24 +55,6 @@ impl MerkleTree {
         Ok(())
     }
 
-    fn build_leaves(&self) -> Result<()> {
-        // Compute and store doc hashes
-        for j in 0..self.n {
-            self.compute_doc(j)?;
-        }
-        Ok(())
-    }
-
-    fn compute_doc(&self, j: usize) -> Result<()> {
-        // Read document content
-        let data = read_doc(j)?;
-        // Compute blake3 hash
-        let digest = blake3(DOC_PREFIX.as_bytes(), &[&data]);
-        // Write hash to file
-        write_node(0, j, &digest)?;
-        Ok(())
-    }
-
     pub fn add_doc(&mut self, leaf_idx: usize) -> Result<()> {
         // Compute and store doc hash
         self.compute_doc(leaf_idx)?;
@@ -93,27 +75,6 @@ impl MerkleTree {
             write_node(i, j, &parent)?;
             // Move up
             j /= 2;
-        }
-        Ok(())
-    }
-
-    fn build_nodes(&self) -> Result<()> {
-        // Compute node hashes
-        for i in 1..=self.max_layer {
-            let mut j: usize = 0;
-            loop {
-                let Some(left) = read_node(i - 1, 2 * j)? else {
-                    break; // No more nodes in this layer
-                };
-                // Read the right node, otherwise use the empty vector
-                let right = read_node(i - 1, 2 * j + 1)?.unwrap_or_default();
-                // Compute hash of the parent node
-                let parent = blake3(NOD_PREFIX.as_bytes(), &[&left, &right]);
-                // Write node to file
-                write_node(i, j, &parent)?;
-                // Jump to the next node
-                j += 1;
-            }
         }
         Ok(())
     }
@@ -149,5 +110,45 @@ impl MerkleTree {
             }
         }
         Ok(lines)
+    }
+
+    // Private methods
+    fn compute_doc(&self, j: usize) -> Result<()> {
+        // Read document content
+        let data = read_doc(j)?;
+        // Compute blake3 hash
+        let digest = blake3(DOC_PREFIX.as_bytes(), &[&data]);
+        // Write hash to file
+        write_node(0, j, &digest)?;
+        Ok(())
+    }
+
+    fn build_leaves(&self) -> Result<()> {
+        // Compute and store doc hashes
+        for j in 0..self.n {
+            self.compute_doc(j)?;
+        }
+        Ok(())
+    }
+
+    fn build_nodes(&self) -> Result<()> {
+        // Compute node hashes
+        for i in 1..=self.max_layer {
+            let mut j: usize = 0;
+            loop {
+                let Some(left) = read_node(i - 1, 2 * j)? else {
+                    break; // No more nodes in this layer
+                };
+                // Read the right node, otherwise use the empty vector
+                let right = read_node(i - 1, 2 * j + 1)?.unwrap_or_default();
+                // Compute hash of the parent node
+                let parent = blake3(NOD_PREFIX.as_bytes(), &[&left, &right]);
+                // Write node to file
+                write_node(i, j, &parent)?;
+                // Jump to the next node
+                j += 1;
+            }
+        }
+        Ok(())
     }
 }
