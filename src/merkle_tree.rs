@@ -102,22 +102,15 @@ impl MerkleTree {
         for i in 1..=self.max_layer {
             let mut j: usize = 0;
             loop {
-                let left_idx = 2 * j;
-                let right_idx = 2 * j + 1;
-
-                let Some(left) = read_node(i - 1, left_idx)? else {
+                let Some(left) = read_node(i - 1, 2 * j)? else {
                     break; // No more nodes in this layer
                 };
-
                 // Read the right node, otherwise use the empty vector
-                let right = read_node(i - 1, right_idx)?.unwrap_or_default();
-
+                let right = read_node(i - 1, 2 * j + 1)?.unwrap_or_default();
                 // Compute hash of the parent node
                 let parent = blake3(NOD_PREFIX.as_bytes(), &[&left, &right]);
-
                 // Write node to file
                 write_node(i, j, &parent)?;
-
                 // Jump to the next node
                 j += 1;
             }
