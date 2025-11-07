@@ -24,6 +24,12 @@ enum Command {
     Add { doc_idx: usize },
     /// Generate a proof for a given document
     Gen { doc_idx: usize },
+    /// Verify a proof
+    Verify {
+        pub_info: String,
+        doc_name: String,
+        proof: String,
+    },
 }
 
 fn main() -> Result<()> {
@@ -54,6 +60,17 @@ fn main() -> Result<()> {
             // Generate the proof
             tree.gen_proof(doc_idx)?;
             println!("Proof generated successfully");
+        }
+        Command::Verify {
+            pub_info,
+            doc_name,
+            proof,
+        } => {
+            if MerkleTree::verify_proof(pub_info, doc_name, proof)? {
+                println!("Proof verification passed");
+            } else {
+                println!("Proof verification failed");
+            }
         }
     }
     Ok(())
