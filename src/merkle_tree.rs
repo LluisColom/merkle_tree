@@ -1,4 +1,4 @@
-use crate::io_utils::{read_file, read_file_str, read_node, write_file, write_summary};
+use crate::io_utils::{read_file, read_file_str, write_file, write_summary};
 use crate::{DOC_PREFIX, NOD_PREFIX};
 use anyhow::Result;
 
@@ -63,12 +63,12 @@ impl MerkleTree {
         // Compute and store node hashes
         for i in 1..=self.max_layer {
             let mut j: usize = 0;
-            loop {
-                let Some(left) = read_node(i - 1, 2 * j)? else {
-                    break; // No more nodes in this layer
-                };
+            // Traverse all the layer
+            while let Ok(left) = read_file(format!("node{}.{}.dat", i - 1, 2 * j)) {
                 // Read the right node, otherwise use the empty vector
-                let right = read_node(i - 1, 2 * j + 1)?.unwrap_or_default();
+                let right = read_file(format!("node{}.{}.dat", i - 1, 2 * j + 1))
+                    .ok()
+                    .unwrap_or_default();
                 // Compute hash of the parent node
                 let parent = blake3(NOD_PREFIX.as_bytes(), &[&left, &right]);
                 // Write node to file
@@ -91,9 +91,11 @@ impl MerkleTree {
         // Update node hashes
         for i in 1..=self.max_layer {
             // Read the left node
-            let left = read_node(i - 1, 2 * j)?.expect("Left node must exist");
+            let left = read_file(format!("node{}.{}.dat", i - 1, 2 * j))?;
             // Read the right node, otherwise use the empty vector
-            let right = read_node(i - 1, 2 * j + 1)?.unwrap_or_default();
+            let right = read_file(format!("node{}.{}.dat", i - 1, 2 * j + 1))
+                .ok()
+                .unwrap_or_default();
             // Compute hash of the parent node
             let parent = blake3(NOD_PREFIX.as_bytes(), &[&left, &right]);
             // Write node to file
@@ -110,10 +112,12 @@ impl MerkleTree {
         // Generate proof
         for i in 0..self.max_layer {
             let entry = if is_even(j) {
-                let sibling = read_node(i, j + 1)?.unwrap_or_default();
+                let sibling = read_file(format!("node{}.{}.dat", i, j + 1))
+                    .ok()
+                    .unwrap_or_default();
                 format!("R{}", hex::encode(sibling))
             } else {
-                let sibling = read_node(i, j - 1)?.unwrap_or_default();
+                let sibling = read_file(format!("node{}.{}.dat", i, j - 1))?;
                 format!("L{}", hex::encode(sibling))
             };
             path.push(entry);
@@ -161,7 +165,7 @@ impl MerkleTree {
     // Private methods
     fn summary(&self) -> Result<Vec<String>> {
         // Read root node
-        let root = read_node(self.max_layer, 0)?.expect("Root node not found");
+        let root = read_file(format!("node{}.{}.dat", self.max_layer, 0))?;
 
         // Produce summary
         let mut lines: Vec<String> = Vec::new();
@@ -177,11 +181,8 @@ impl MerkleTree {
 
         for i in 0..=self.max_layer {
             let mut j: usize = 0;
-            loop {
-                let Some(node) = read_node(i, j)? else {
-                    break; // No more nodes in this layer
-                };
-
+            // Traverse all the layer
+            while let Ok(node) = read_file(format!("node{}.{}.dat", i, j)) {
                 // Store entry in summary
                 lines.push(format!("{}:{}:{}", i, j, hex::encode(node)));
 

@@ -24,16 +24,6 @@ pub fn write_file(file_name: impl AsRef<str>, content: &[u8]) -> anyhow::Result<
     Ok(())
 }
 
-pub fn read_node(i: usize, j: usize) -> anyhow::Result<Option<Vec<u8>>> {
-    let path = PathBuf::from(DATA_PATH).join(format!("node{}.{}.dat", i, j));
-    // Read file content
-    let mut file = std::fs::File::open(path)?;
-    let mut buf = Vec::new();
-    file.read_to_end(&mut buf)
-        .map_err(|e| anyhow::anyhow!("Error reading file: {}", e))?;
-    Ok(Some(buf))
-}
-
 pub fn write_summary(content: Vec<String>) -> anyhow::Result<()> {
     let path = PathBuf::from(DATA_PATH).join("summary.txt");
     let mut out = std::fs::File::create(path)?;
