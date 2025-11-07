@@ -11,6 +11,7 @@ fn blake3(prefix: &[u8], data: &[&[u8]]) -> Vec<u8> {
     hasher.finalize().as_bytes().to_vec()
 }
 
+#[inline]
 fn max_layer(n: usize) -> usize {
     if n <= 1 {
         0
