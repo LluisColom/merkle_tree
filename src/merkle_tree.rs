@@ -1,6 +1,4 @@
-use crate::io_utils::{
-    read_doc, read_file, read_node, write_file, write_node, write_summary,
-};
+use crate::io_utils::{read_doc, read_file, read_node, write_file, write_node, write_summary};
 use crate::{DOC_PREFIX, NOD_PREFIX};
 use anyhow::Result;
 

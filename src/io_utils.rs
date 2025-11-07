@@ -18,10 +18,6 @@ pub fn write_file(file_name: impl AsRef<str>, content: &[u8]) -> anyhow::Result<
 
 pub fn read_doc(i: usize) -> anyhow::Result<Vec<u8>> {
     let path = PathBuf::from(DATA_PATH).join(format!("doc{}.dat", i));
-    // Check if the file exists
-    if !path.exists() {
-        return Err(anyhow::anyhow!("Document {i} not found"));
-    }
     // Read file content
     let mut file = std::fs::File::open(path)?;
     let mut buf = Vec::new();
@@ -32,10 +28,6 @@ pub fn read_doc(i: usize) -> anyhow::Result<Vec<u8>> {
 
 pub fn read_node(i: usize, j: usize) -> anyhow::Result<Option<Vec<u8>>> {
     let path = PathBuf::from(DATA_PATH).join(format!("node{}.{}.dat", i, j));
-    // Check if the file exists
-    if !path.exists() {
-        return Ok(None);
-    }
     // Read file content
     let mut file = std::fs::File::open(path)?;
     let mut buf = Vec::new();
