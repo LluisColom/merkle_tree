@@ -1,5 +1,5 @@
 use crate::io_utils::{
-    read_doc, read_file, read_node, read_summary, write_file, write_node, write_summary,
+    read_doc, read_file, read_node, write_file, write_node, write_summary,
 };
 use crate::{DOC_PREFIX, NOD_PREFIX};
 use anyhow::Result;
@@ -45,10 +45,7 @@ impl MerkleTree {
 
     pub fn load() -> Result<Option<Self>> {
         // Read summary content
-        let summary = match read_summary()? {
-            None => return Ok(None),
-            Some(summary) => summary,
-        };
+        let summary = read_file("summary.txt")?;
         // Parse the first line
         let first_line = summary.lines().next().unwrap_or_default();
         // Parse the number of documents
