@@ -1,4 +1,4 @@
-use crate::io_utils::{read_file, read_file_str, write_file, write_summary};
+use crate::io_utils::{read_file, read_file_str, write_file, write_file_str};
 use crate::{DOC_PREFIX, NOD_PREFIX};
 use anyhow::Result;
 
@@ -125,7 +125,7 @@ impl MerkleTree {
             j /= 2;
         }
         // Write proof to file
-        write_file("proof.dat", &path.join(":").as_bytes())?;
+        write_file_str("proof.dat", path)?;
         Ok(())
     }
 
@@ -159,7 +159,7 @@ impl MerkleTree {
     }
 
     pub fn store(&self) -> Result<()> {
-        write_summary(self.summary()?)
+        write_file_str("summary.txt", self.summary()?)
     }
 
     // Private methods
