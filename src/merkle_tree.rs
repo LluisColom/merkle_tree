@@ -1,4 +1,4 @@
-use crate::io_utils::{read_doc, read_file_str, read_node, write_file, write_node, write_summary};
+use crate::io_utils::{read_file, read_file_str, read_node, write_file, write_summary};
 use crate::{DOC_PREFIX, NOD_PREFIX};
 use anyhow::Result;
 
@@ -72,7 +72,7 @@ impl MerkleTree {
                 // Compute hash of the parent node
                 let parent = blake3(NOD_PREFIX.as_bytes(), &[&left, &right]);
                 // Write node to file
-                write_node(i, j, &parent)?;
+                write_file(format!("node{}.{}.dat", i, j), &parent)?;
                 // Jump to the next node
                 j += 1;
             }
@@ -97,7 +97,7 @@ impl MerkleTree {
             // Compute hash of the parent node
             let parent = blake3(NOD_PREFIX.as_bytes(), &[&left, &right]);
             // Write node to file
-            write_node(i, j, &parent)?;
+            write_file(format!("node{}.{}.dat", i, j), &parent)?;
             // Move up
             j /= 2;
         }
@@ -194,11 +194,11 @@ impl MerkleTree {
 
     fn compute_doc(&self, j: usize) -> Result<()> {
         // Read document content
-        let data = read_doc(j)?;
+        let data = read_file(format!("doc{}.dat", j))?;
         // Compute blake3 hash
         let digest = blake3(DOC_PREFIX.as_bytes(), &[&data]);
         // Write hash to file
-        write_node(0, j, &digest)?;
+        write_file(format!("node{}.{}.dat", 0, j), &digest)?;
         Ok(())
     }
 }
