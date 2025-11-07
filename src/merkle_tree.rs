@@ -1,4 +1,4 @@
-use crate::io_utils::{read_doc, read_file, read_node, write_file, write_node, write_summary};
+use crate::io_utils::{read_doc, read_file_str, read_node, write_file, write_node, write_summary};
 use crate::{DOC_PREFIX, NOD_PREFIX};
 use anyhow::Result;
 
@@ -43,7 +43,7 @@ impl MerkleTree {
 
     pub fn load() -> Result<Option<Self>> {
         // Read summary content
-        let summary = read_file("summary.txt")?;
+        let summary = read_file_str("summary.txt")?;
         // Parse the first line
         let first_line = summary.lines().next().unwrap_or_default();
         // Parse the number of documents
@@ -136,11 +136,11 @@ impl MerkleTree {
         let root_hex = parts[6];
 
         // Read and hash the document
-        let doc = read_file(doc)?;
+        let doc = read_file_str(doc)?;
         let mut current = blake3(doc_prefix.as_bytes(), &[doc.as_bytes()]);
 
         // Process proof
-        for entry in read_file(proof)?.split(':') {
+        for entry in read_file_str(proof)?.split(':') {
             let (dir, hash_hex) = entry.split_at(1);
             let hash = hex::decode(hash_hex)?;
 

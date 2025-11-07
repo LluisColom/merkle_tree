@@ -2,7 +2,7 @@ use crate::DATA_PATH;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 
-pub fn read_file(file_name: impl AsRef<str>) -> anyhow::Result<String> {
+pub fn read_file_str(file_name: impl AsRef<str>) -> anyhow::Result<String> {
     let path = PathBuf::from(DATA_PATH).join(file_name.as_ref());
     // Read file content as string
     Ok(std::fs::read_to_string(path)?)
