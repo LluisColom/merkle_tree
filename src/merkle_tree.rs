@@ -145,7 +145,7 @@ impl MerkleTree {
         let mut current = blake3(doc_prefix.as_bytes(), &[doc.as_bytes()]);
 
         // Process proof
-        for entry in read_file_str(proof)?.split(':') {
+        for entry in read_file_str(proof)?.lines() {
             let (dir, hash_hex) = entry.split_at(1);
             let hash = hex::decode(hash_hex)?;
 
