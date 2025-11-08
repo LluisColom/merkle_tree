@@ -55,7 +55,7 @@ fn main() -> Result<()> {
         Command::Proof { doc_idx } => {
             let tree = MerkleTree::load()?;
             let n = tree.elements();
-            ensure!(doc_idx < n, "Invalid document index, max is {}", n);
+            ensure!(doc_idx < n, "Choose a valid doc index in [0, {})", n);
             // Generate the proof
             tree.gen_proof(doc_idx)?;
             println!("Proof generated successfully");
