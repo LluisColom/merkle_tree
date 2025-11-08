@@ -1,9 +1,9 @@
 mod io_utils;
 mod merkle_tree;
 
-use crate::merkle_tree::MerkleTree;
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use merkle_tree::MerkleTree;
 
 static DOC_PREFIX: &str = "3C3C3C3C";
 static NOD_PREFIX: &str = "F5F5F5F5";
