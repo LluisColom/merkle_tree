@@ -1,7 +1,7 @@
 mod io_utils;
 mod merkle_tree;
 
-use anyhow::Result;
+use anyhow::{Result, ensure};
 use clap::{Parser, Subcommand};
 use merkle_tree::MerkleTree;
 
@@ -33,7 +33,7 @@ fn main() -> Result<()> {
 
     match args.command {
         Command::Build { n } => {
-            assert!(n > 0, "Number of documents must be greater than 0");
+            ensure!(n > 0, "Number of documents must be greater than 0");
             // Create a new Merkle tree
             let tree = MerkleTree::new(n);
             // Build the tree
@@ -44,6 +44,8 @@ fn main() -> Result<()> {
         }
         Command::Add { doc_idx } => {
             let mut tree = MerkleTree::load()?;
+            let n = tree.elements();
+            ensure!(doc_idx == n, "Invalid document index, expected: {}", n);
             // Add the document to the tree
             tree.add_doc(doc_idx)?;
             // Store the summary
@@ -52,7 +54,8 @@ fn main() -> Result<()> {
         }
         Command::Proof { doc_idx } => {
             let tree = MerkleTree::load()?;
-            assert!(doc_idx < tree.elements(), "Invalid document index");
+            let n = tree.elements();
+            ensure!(doc_idx < n, "Invalid document index, max is {}", n);
             // Generate the proof
             tree.gen_proof(doc_idx)?;
             println!("Proof generated successfully");
