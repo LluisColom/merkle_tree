@@ -181,9 +181,10 @@ impl MerkleTree {
     fn summary(&self, only_header: bool) -> Result<Vec<String>> {
         // Read root node
         let root = read_file(format!("node{}.{}.dat", self.max_layer, 0))?;
-
-        // Produce summary
-        let mut lines: Vec<String> = Vec::new();
+        // Preallocate space to build our summary
+        let capacity = if only_header { 1 } else { self.n + 1 };
+        let mut lines: Vec<String> = Vec::with_capacity(capacity);
+        // Generate header
         let header = format!(
             "MerkleTree:blake3:{}:{}:{}:{}:{}",
             DOC_PREFIX.to_uppercase(),
@@ -204,7 +205,6 @@ impl MerkleTree {
             while let Ok(node) = read_file(format!("node{}.{}.dat", i, j)) {
                 // Store entry in summary
                 lines.push(format!("{}:{}:{}", i, j, hex::encode(node)));
-
                 // Jump to the next node
                 j += 1;
             }
