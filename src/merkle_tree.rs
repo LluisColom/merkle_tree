@@ -1,6 +1,6 @@
 use crate::io_utils::{read_file, read_file_str, write_file, write_file_str};
 use crate::{DOC_PREFIX, NOD_PREFIX};
-use anyhow::Result;
+use anyhow::{Context, Result, anyhow};
 
 fn blake3(prefix: &[u8], data: &[&[u8]]) -> Vec<u8> {
     let mut hasher = blake3::Hasher::new();
@@ -42,18 +42,21 @@ impl MerkleTree {
         self.n
     }
 
-    pub fn load() -> Result<Option<Self>> {
+    pub fn load() -> Result<Self> {
         // Read summary content
         let summary = read_file_str("summary.txt")?;
-        // Parse the first line
-        let first_line = summary.lines().next().unwrap_or_default();
-        // Parse the number of documents
-        let n_field = first_line.split(":").nth(4);
-        // Cast to usize and return the tree
-        match n_field.and_then(|n| n.parse::<usize>().ok()) {
-            Some(n) => Ok(Some(Self::new(n))),
-            None => Ok(None),
-        }
+        // Extract n from summary
+        let n = summary
+            .lines()
+            .next()
+            .ok_or_else(|| anyhow!("Empty summary"))?
+            .split(":")
+            .nth(4)
+            .ok_or_else(|| anyhow!("Missing n in summary"))?
+            .parse::<usize>()
+            .with_context(|| anyhow!("Invalid n value in summary"))?;
+        // Build tree
+        Ok(Self::new(n))
     }
 
     pub fn build(&self) -> Result<()> {

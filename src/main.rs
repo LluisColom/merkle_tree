@@ -43,7 +43,7 @@ fn main() -> Result<()> {
             println!("Tree computed successfully");
         }
         Command::Add { doc_idx } => {
-            let mut tree = MerkleTree::load()?.expect("Tree not found");
+            let mut tree = MerkleTree::load()?;
             // Add the document to the tree
             tree.add_doc(doc_idx)?;
             // Store the summary
@@ -51,7 +51,7 @@ fn main() -> Result<()> {
             println!("New document added successfully");
         }
         Command::Proof { doc_idx } => {
-            let tree = MerkleTree::load()?.expect("Tree not found");
+            let tree = MerkleTree::load()?;
             assert!(doc_idx < tree.elements(), "Invalid document index");
             // Generate the proof
             tree.gen_proof(doc_idx)?;
