@@ -5,8 +5,12 @@ use anyhow::{Result, ensure};
 use clap::{Parser, Subcommand};
 use merkle_tree::MerkleTree;
 
+/// Prefix used for hashing documents
 static DOC_PREFIX: &str = "3C3C3C3C";
+/// Prefix used for hashing nodes
 static NOD_PREFIX: &str = "F5F5F5F5";
+/// Path in which the data is generated
+/// The user input files are expected to be found there
 static DATA_PATH: &str = "./data";
 
 #[derive(Parser, Debug)]
@@ -19,7 +23,7 @@ struct Args {
 #[derive(Debug, Subcommand)]
 enum Command {
     /// Build a new Merkle tree from N documents
-    Build { n: usize },
+    New { n: usize },
     /// Add a new document to the tree
     Add { doc_idx: usize },
     /// Generate a proof for a given document
@@ -32,7 +36,7 @@ fn main() -> Result<()> {
     let args = Args::parse();
 
     match args.command {
-        Command::Build { n } => {
+        Command::New { n } => {
             ensure!(n > 0, "Number of documents must be greater than 0");
             // Create a new Merkle tree
             let tree = MerkleTree::new(n);

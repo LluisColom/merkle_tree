@@ -2,6 +2,7 @@ use crate::io_utils::{read_file, read_file_str, write_file, write_file_str};
 use crate::{DOC_PREFIX, NOD_PREFIX};
 use anyhow::{Context, Result, anyhow};
 
+/// Hashes the provided input using Blake3
 fn blake3(prefix: &[u8], data: &[&[u8]]) -> Vec<u8> {
     let mut hasher = blake3::Hasher::new();
     hasher.update(prefix);
@@ -31,6 +32,7 @@ pub struct MerkleTree {
 }
 
 impl MerkleTree {
+    /// Creates a new MerkleTree with N documents
     pub fn new(n: usize) -> Self {
         Self {
             n,
@@ -38,10 +40,12 @@ impl MerkleTree {
         }
     }
 
+    /// Returns the number of elements in the MerkleTree
     pub fn elements(&self) -> usize {
         self.n
     }
 
+    /// Loads an existing MerkleTree from disk
     pub fn load() -> Result<Self> {
         // Read summary content
         let summary = read_file_str("summary.txt")?;
@@ -59,6 +63,7 @@ impl MerkleTree {
         Ok(Self::new(n))
     }
 
+    /// Builds a MerkleTree from the expected N documents
     pub fn build(&self) -> Result<()> {
         // Compute and store doc hashes
         for j in 0..self.n {
@@ -84,6 +89,7 @@ impl MerkleTree {
         Ok(())
     }
 
+    /// Adds a new document to the MerkleTree
     pub fn add_doc(&mut self, doc_idx: usize) -> Result<()> {
         // Compute and store doc hash
         self.compute_doc(doc_idx)?;
@@ -110,6 +116,7 @@ impl MerkleTree {
         Ok(())
     }
 
+    /// Generates a new proof for the given document
     pub fn gen_proof(&self, doc_idx: usize) -> Result<()> {
         let mut proof: Vec<String> = Vec::with_capacity(self.max_layer + 1);
         // Proof contains the tree's header (relevant public info)
@@ -137,6 +144,7 @@ impl MerkleTree {
         Ok(())
     }
 
+    /// Verifies the given proof with the specified document
     pub fn verify_proof(document: String, proof: String) -> Result<bool> {
         // Read proof document
         let proof = read_file_str(proof)?;
@@ -173,11 +181,14 @@ impl MerkleTree {
         Ok(hex::encode(current) == root_hex)
     }
 
+    /// Stores the MerkleTree into disk
     pub fn store(&self) -> Result<()> {
         write_file_str("summary.txt", self.summary(false)?)
     }
 
     // Private methods
+
+    /// Generates the MerkleTree summary
     fn summary(&self, only_header: bool) -> Result<Vec<String>> {
         // Read root node
         let root = read_file(format!("node{}.{}.dat", self.max_layer, 0))?;
@@ -212,6 +223,7 @@ impl MerkleTree {
         Ok(lines)
     }
 
+    /// Computes and stores a document's digest
     fn compute_doc(&self, j: usize) -> Result<()> {
         // Read document content
         let data = read_file(format!("doc{}.dat", j))?;
