@@ -147,6 +147,7 @@ impl MerkleTree {
             None => anyhow::bail!("No header found in proof"),
             Some(header) => header.split(':').collect::<Vec<&str>>(),
         };
+        assert_eq!(header.len(), 7, "Header must contain 7 entries");
         let hasher = header[1];
         assert_eq!(hasher, "blake3", "Only blake3 is supported for now");
         let doc_prefix = header[2];
