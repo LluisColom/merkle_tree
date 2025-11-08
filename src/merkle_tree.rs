@@ -108,7 +108,11 @@ impl MerkleTree {
     }
 
     pub fn gen_proof(&self, doc_idx: usize) -> Result<()> {
-        let mut path: Vec<String> = Vec::with_capacity(self.max_layer);
+        let mut proof: Vec<String> = Vec::with_capacity(self.max_layer + 1);
+        // Proof contains the tree's header (relevant public info)
+        let summary = self.summary(true)?.first().cloned().unwrap();
+        proof.push(summary);
+
         let mut j = doc_idx;
         // Generate proof
         for i in 0..self.max_layer {
@@ -121,31 +125,37 @@ impl MerkleTree {
                 let sibling = read_file(format!("node{}.{}.dat", i, j - 1))?;
                 format!("L{}", hex::encode(sibling))
             };
-            path.push(entry);
+            proof.push(entry);
             // Move up
             j /= 2;
         }
         // Write proof to file
-        write_file_str("proof.dat", path)?;
+        write_file_str("proof.dat", proof)?;
         Ok(())
     }
 
-    pub fn verify_proof(pub_info: String, doc: String, proof: String) -> Result<bool> {
-        // Extract required fields from public info
-        let parts = pub_info.split(":").collect::<Vec<&str>>();
-        let hasher = parts[1];
-        assert_eq!(hasher, "blake3", "Only blake3 is supported for now");
+    pub fn verify_proof(document: String, proof: String) -> Result<bool> {
+        // Read proof document
+        let proof = read_file_str(proof)?;
+        let mut lines = proof.lines();
 
-        let doc_prefix = parts[2];
-        let node_prefix = parts[3];
-        let root_hex = parts[6];
+        // Extract required information from header
+        let header = match lines.next() {
+            None => anyhow::bail!("No header found in proof"),
+            Some(header) => header.split(':').collect::<Vec<&str>>(),
+        };
+        let hasher = header[1];
+        assert_eq!(hasher, "blake3", "Only blake3 is supported for now");
+        let doc_prefix = header[2];
+        let node_prefix = header[3];
+        let root_hex = header[6];
 
         // Read and hash the document
-        let doc = read_file_str(doc)?;
+        let doc = read_file_str(document)?;
         let mut current = blake3(doc_prefix.as_bytes(), &[doc.as_bytes()]);
 
         // Process proof
-        for entry in read_file_str(proof)?.lines() {
+        for entry in lines {
             let (dir, hash_hex) = entry.split_at(1);
             let hash = hex::decode(hash_hex)?;
 
@@ -160,11 +170,11 @@ impl MerkleTree {
     }
 
     pub fn store(&self) -> Result<()> {
-        write_file_str("summary.txt", self.summary()?)
+        write_file_str("summary.txt", self.summary(false)?)
     }
 
     // Private methods
-    fn summary(&self) -> Result<Vec<String>> {
+    fn summary(&self, only_header: bool) -> Result<Vec<String>> {
         // Read root node
         let root = read_file(format!("node{}.{}.dat", self.max_layer, 0))?;
 
@@ -179,6 +189,10 @@ impl MerkleTree {
             hex::encode(root)
         );
         lines.push(header);
+
+        if only_header {
+            return Ok(lines);
+        }
 
         for i in 0..=self.max_layer {
             let mut j: usize = 0;
